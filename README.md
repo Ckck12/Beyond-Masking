@@ -19,7 +19,7 @@ This paper proposes a novel multimodal deepfake detection framework that leverag
 
 #### 1. Clone the repository
 ```bash
-git clone [https://github.com/your_username/Beyond-Masking.git](https://github.com/Ckck12/Beyond-Masking.git)
+git clone https://github.com/Ckck12/Beyond-Masking.git
 cd Beyond-Masking
 ```
 python 3.9

@@ -61,9 +61,8 @@ Before training, you must preprocess each dataset to extract cropped face videos
                             └── landmarks.npy
 ```                            
 
-preparing all the modality datas in advance is much efficient.
-예시 이미지 추가 아래
-<!-- ![Figure 2: Overview of our proposed framework.](https://i.imgur.com/your_image_link.png) *<p align="center">Figure 1: Overview of our proposed framework.</p>* -->
+preparing all the modality datas in advance is much more efficient.
+
 
 
 ## ⚙️ Training

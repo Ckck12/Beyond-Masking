@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beyond Masking: Landmark-based Representation Learning and Knowledge-Distillation for Audio-Visual Deepfake Detection</title>
+  <meta name="description" content="Landmark-based Distillation (LBD) and Multimodal Temporal Information Alignment (MTIA) for audio-visual deepfake detection (CIKM 2025 short paper).">
+  <meta http-equiv="Cache-Control" content="no-cache">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #3F7D20;
+      --accent-hover: #31631A;
+      --tint: #EFF6EA;
+      --tint-strong: #DDEDD3;
+      --text: #1a1a1a;
+      --muted: #5c5c5c;
+      --bg: #f5f5f5;
+      --surface: #ffffff;
+      --border: #e6e6e6;
+      --hero-bg: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+    /* Hero */
+    .hero {
+      background: var(--hero-bg);
+      color: var(--text);
+      padding: 40px 24px 48px;
+      text-align: center;
+      border-bottom: 4px solid var(--accent);
+    }
+    .hero-inner { max-width: 860px; margin: 0 auto; }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+    .brand-copy {
+      line-height: 1.25;
+      padding: 0 0 0 12px;
+      border-left: 4px solid var(--accent);
+      text-align: left;
+    }
+    .brand-copy strong {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+    }
+    .brand-copy span {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .brand-copy a { color: inherit; }
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      color: var(--text);
+    }
+    .hero .authors {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: var(--text);
+    }
+    .hero .author-name {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .hero .authors sup { font-size: 0.7em; color: var(--text); }
+    .hero .affiliations {
+      margin: 0 0 10px;
+      font-size: 0.84rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .hero .subtitle {
+      margin: 0 0 28px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .badge:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    /* Layout */
+    .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+    main { padding: 40px 0 64px; }
+
+    /* Nav */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .nav-bar ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 20px;
+      list-style: none;
+      margin: 0;
+      padding: 12px 24px;
+      max-width: 960px;
+      margin-inline: auto;
+      font-size: 0.9rem;
+    }
+    .nav-bar a { color: var(--muted); font-weight: 500; text-decoration: none; }
+    .nav-bar a:hover { color: var(--accent); }
+
+    /* Sections */
+    section { margin-bottom: 48px; scroll-margin-top: 56px; }
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--accent);
+      letter-spacing: -0.01em;
+    }
+    h3 { font-size: 1.05rem; margin: 0 0 8px; }
+    p { margin: 0 0 12px; }
+    .abstract-text {
+      font-size: 0.97rem;
+      color: var(--text);
+      line-height: 1.7;
+      text-align: justify;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+    }
+    .tldr {
+      border-left: 4px solid var(--accent);
+    }
+    .setup-list {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+    .setup-list li { margin-bottom: 8px; }
+    .setup-list li:last-child { margin-bottom: 0; }
+    code {
+      font-size: 0.88em;
+      background: var(--tint);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .math {
+      font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif;
+      font-size: 1.02em;
+    }
+    pre.code {
+      margin: 0 0 12px;
+      padding: 12px 14px;
+      background: #f7f7f7;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      overflow-x: auto;
+    }
+    pre.code code { background: none; padding: 0; }
+
+    /* Figures */
+    figure.fig {
+      margin: 0 0 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    figure.fig img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      border-radius: 6px;
+    }
+    figure.fig.narrow img { max-width: 640px; width: 100%; }
+    figure.fig figcaption {
+      margin-top: 12px;
+      font-size: 0.86rem;
+      color: var(--muted);
+      line-height: 1.55;
+      text-align: left;
+    }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table.results {
+      border-collapse: collapse;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 0.86rem;
+    }
+    table.results th, table.results td {
+      border: 1px solid var(--border);
+      padding: 7px 8px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    table.results thead th { background: var(--accent); color: #fff; font-weight: 600; border-color: var(--accent-hover); }
+    table.results tbody th { background: var(--tint); font-weight: 600; text-align: left; }
+    table.results td:first-child,
+    table.results th:first-child { text-align: left; }
+    table.results tr.group td {
+      background: var(--tint);
+      font-weight: 600;
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    table.results thead th { white-space: normal; line-height: 1.3; }
+    table.results tr.ours td { background: var(--tint-strong); }
+    table.results tr.ours td:first-child { font-weight: 700; }
+    table.results.flags td:first-child { text-align: center; }
+    .table-caption {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .table-notes {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 10px;
+      line-height: 1.55;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 4px solid var(--accent);
+      padding: 36px 24px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: var(--surface);
+    }
+    footer a { color: var(--accent); }
+    footer a:hover { color: var(--accent-hover); }
+    footer p { margin: 0 0 6px; }
+    .footer-brand {
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+      margin-bottom: 14px;
+    }
+    @media (max-width: 640px) {
+      .hero { padding: 32px 16px 40px; }
+      .container { padding: 0 16px; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="brand-row">
+        <div class="brand-copy">
+          <strong><a href="https://dash-lab.github.io/" target="_blank" rel="noopener">DASH Lab</a></strong>
+          <span>Sungkyunkwan University</span>
+        </div>
+      </div>
+      <h1>Beyond Masking: Landmark-based Representation Learning and Knowledge-Distillation for Audio-Visual Deepfake Detection</h1>
+      <p class="authors">
+        <span class="author-name">Chan Park</span><sup>1</sup>,
+        <span class="author-name">Muhammad Shahid Muneer</span><sup>2</sup>,
+        <span class="author-name">Simon S. Woo</span><sup>2,*</sup>
+      </p>
+      <p class="affiliations">
+        <sup>1</sup>Department of Artificial Intelligence, Sungkyunkwan University
+        &nbsp;·&nbsp;
+        <sup>2</sup>Department of Computer Science &amp; Engineering, Sungkyunkwan University
+        <br>Suwon, Republic of Korea &nbsp;·&nbsp; * Corresponding author
+      </p>
+      <p class="subtitle">
+        <a href="https://cikm2025.org/" target="_blank" rel="noopener">CIKM 2025</a> &nbsp;·&nbsp;
+        34th ACM International Conference on Information and Knowledge Management (Short Paper)
+        <br>November 10–14, 2025, Seoul, Republic of Korea
+      </p>
+      <div class="badges">
+        <a class="badge" href="paper.pdf">Paper (PDF)</a>
+        <a class="badge" href="https://doi.org/10.1145/3746252.3760853" target="_blank" rel="noopener">DOI</a>
+        <a class="badge" href="https://github.com/Ckck12/Beyond-Masking" target="_blank" rel="noopener">Code</a>
+        <a class="badge" href="#citation">BibTeX</a>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav-bar">
+    <ul>
+      <li><a href="#tldr">TL;DR</a></li>
+      <li><a href="#abstract">Abstract</a></li>
+      <li><a href="#method">Method</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#ablation">Ablation</a></li>
+      <li><a href="#qualitative">Qualitative</a></li>
+      <li><a href="#code">Code</a></li>
+      <li><a href="#citation">Citation</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <main>
+
+      <section id="tldr">
+        <h2>TL;DR</h2>
+        <div class="card tldr">
+          <p>
+            Audio-visual deepfake detectors that do well on academic benchmarks often attend to background and other spurious cues,
+            and degrade on real-world deepfakes. <strong>Beyond Masking</strong> uses facial landmarks as a distillation target so that
+            both the video and the audio encoder focus on facial geometry, and aligns the two modalities over time with contrastive learning.
+          </p>
+          <ul class="setup-list">
+            <li><strong>Landmark-based Distillation (LBD):</strong> video and audio landmark predictors are aligned with a projected MediaPipe landmark representation through KL-divergence.</li>
+            <li><strong>Multimodal Temporal Information Alignment (MTIA):</strong> transformer encoders with positional encoding, cross-attention fusion, and an audio-visual contrastive loss.</li>
+            <li><strong>Real-World (RW) web dataset:</strong> over 500 viral audio-visual deepfakes collected from social media platforms.</li>
+            <li><strong>Cross-dataset</strong> (trained on FakeAVCeleb and KoDF): 78.12 ACC / 78.82 AUC on DFDC and 75.12 ACC / 75.65 AUC on the RW dataset with 32.4 M parameters, the highest values among the methods compared in Table 2.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="abstract">
+        <h2>Abstract</h2>
+        <div class="card">
+          <p class="abstract-text">Audio-visual deepfake detection methods demonstrate strong performance on academic datasets but fail significantly when applied to real-world. To address the shortcomings of previous approaches, we utilize landmarks dynamic information. First, we propose Landmark-based Distillation (LBD), motivated by I-JEPA&#8217;s representation learning approach. LBD utilizes KL-divergence to align facial landmark predictions from visual and audio encoders, enforcing focus on geometric facial features rather than spurious background information. Second, we introduce Multimodal Temporal Information Alignment (MTIA), which employs contrastive learning to enhance temporal consistency between audio and visual representations. We conduct experiments on academic datasets and web-based deepfakes collected from diverse social media platforms, serving as real-world examples. Our proposed landmark-guided distillation framework achieves computational efficiency while improving multimodal video deepfake detection performance across a diverse range of deepfakes compared to existing methods. The code is available at <a href="https://github.com/Ckck12/Beyond-Masking" target="_blank" rel="noopener">https://github.com/Ckck12/Beyond-Masking</a>.</p>
+        </div>
+      </section>
+
+      <section id="realworld">
+        <h2>Real-World Audio-Visual Deepfakes</h2>
+        <figure class="fig narrow">
+          <img src="assets/fig1_realworld_samples.png" alt="Grid of eight deepfake audio-visual samples collected from social media" loading="lazy">
+          <figcaption><strong>Figure 1:</strong> Deepfake audio-visual samples were collected from social media platforms such as Meta, YouTube, X, and Reddit.</figcaption>
+        </figure>
+        <div class="card">
+          <p style="margin:0;">
+            The Real-World (RW) web dataset contains over 500 viral audio-visual deepfake samples sourced from major social media platforms, including Meta, YouTube, and Reddit.
+            Samples were chosen by video quality and audio realism, and include high-value professionals such as presidents and military personnel.
+            For real audio-visual samples, 500 VoxCeleb videos are used.
+          </p>
+        </div>
+      </section>
+
+      <section id="method">
+        <h2>Method</h2>
+        <figure class="fig">
+          <img src="assets/fig2_framework.png" alt="Framework: 3D CNN video encoder, 1D CNN audio encoder, landmark projector and predictors (LBD), transformer encoders and MTIA, cross-attention classifier" loading="lazy">
+          <figcaption><strong>Figure 2:</strong> Overview of the landmark-guided framework with landmark predictors (P<sup>v</sup><sub>φ</sub>, P<sup>a</sup><sub>φ</sub>) and projector P<sub>θ</sub>, and MTIA.</figcaption>
+        </figure>
+        <div class="card">
+          <ul class="setup-list">
+            <li><strong>Inputs:</strong> cropped face video (3D CNN <span class="math">f<sub>vid</sub></span>), MFCC audio features (1D convolution <span class="math">f<sub>aud</sub></span>), and facial landmarks from MediaPipe, mapped by the landmark projector <span class="math">P<sub>θ</sub></span> to a landmark representation <span class="math">l</span>.</li>
+            <li><strong>LBD:</strong> landmark predictors give <span class="math">p = P<sup>v</sup><sub>φ</sub>(V′)</span> and <span class="math">p′ = P<sup>a</sup><sub>φ</sub>(A′)</span>, trained with
+              <span class="math">L<sub>KL</sub> = KL(σ(p/T) ‖ σ(l/T)) + λ<sub>β</sub> KL(σ(p′/T) ‖ σ(l/T))</span>. This pushes both encoders toward facial regions such as the eyes, lips, and face attributes rather than the background, neck, or hair.</li>
+            <li><strong>MTIA:</strong> <span class="math">V̂ = T(V′ + PE)</span> and <span class="math">Â = T′(A′ + PE)</span>. V̂ is the query and Â the key and value of a multi-head cross-attention that feeds the real/fake classifier (<span class="math">L<sub>BCE</sub></span>). A contrastive loss <span class="math">L<sub>contrast</sub></span> on V̂ and Â matches audio-video pairs and pushes apart mismatched ones.</li>
+            <li><strong>Objective:</strong> <span class="math">L = α(L<sub>KL</sub> + L<sub>contrast</sub>) + (1 − α) L<sub>BCE</sub></span> with α = 0.8, λ<sub>α</sub> = 0.5, λ<sub>γ</sub> = 0.5, λ<sub>β</sub> = 0.5.</li>
+            <li><strong>Settings:</strong> 3-second clips with 60 video frames, 478 landmarks per frame (X and Y), and MFCC features with 40 channels, a hop length of 512, and an FFT length of 2,048. Real samples are paired with fake samples from the same manipulated videos.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="results">
+        <h2>Quantitative Results</h2>
+        <p class="table-caption">TABLE 1 &nbsp;·&nbsp; Intra-dataset evaluation results showing ACC, AUC, and model parameters on academic deepfake detection benchmarks.</p>
+        <div class="table-wrap">
+          <table class="results">
+            <thead>
+              <tr><th rowspan="2">Methods</th><th rowspan="2">Params</th><th colspan="2">DF-TIMIT (LQ)</th><th colspan="2">DF-TIMIT (HQ)</th><th colspan="2">DFDC</th><th colspan="2">FakeAVCeleb</th><th colspan="2">KoDF</th></tr>
+              <tr><th>ACC</th><th>AUC</th><th>ACC</th><th>AUC</th><th>ACC</th><th>AUC</th><th>ACC</th><th>AUC</th><th>ACC</th><th>AUC</th></tr>
+            </thead>
+            <tbody>
+              <tr class="group"><td colspan="12">Visual unimodal</td></tr>
+              <tr><td>SPSL (Xception)</td><td>45.7 M</td><td>91.17</td><td>90.03</td><td>92.29</td><td>91.78</td><td>92.04</td><td>94.74</td><td>77.94</td><td>79.83</td><td>92.36</td><td>93.19</td></tr>
+              <tr><td>PRRNet</td><td>62.1 M</td><td>93.86</td><td>95.30</td><td>98.72</td><td>98.97</td><td>95.24</td><td>96.37</td><td>78.17</td><td>79.54</td><td>94.52</td><td>94.83</td></tr>
+              <tr><td>LipForensics</td><td>36.0 M</td><td>92.77</td><td>93.06</td><td>97.74</td><td>96.51</td><td>82.47</td><td>65.06</td><td>76.22</td><td>78.43</td><td>93.16</td><td>93.72</td></tr>
+              <tr><td>STIL</td><td>32.5 M</td><td>95.76</td><td>94.18</td><td>98.24</td><td>99.03</td><td>92.17</td><td>95.07</td><td>79.80</td><td>78.29</td><td>94.14</td><td>93.92</td></tr>
+              <tr><td>FTCN</td><td>26.6 M</td><td>93.64</td><td>94.41</td><td>96.62</td><td>95.39</td><td>94.92</td><td>97.88</td><td>78.98</td><td>79.21</td><td>93.22</td><td>92.96</td></tr>
+              <tr class="group"><td colspan="12">Multimodal</td></tr>
+              <tr><td>DST-Net</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>82.80</td><td>86.20</td><td>78.40</td><td>80.40</td><td>–</td><td>–</td></tr>
+              <tr><td>VFD</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>80.90</td><td>85.10</td><td>81.50</td><td>86.10</td><td>–</td><td>–</td></tr>
+              <tr><td>Emotions</td><td>42.7 M</td><td>92.76</td><td>92.95</td><td>94.69</td><td>95.42</td><td>82.36</td><td>85.00</td><td>83.42</td><td>84.81</td><td>93.26</td><td>94.41</td></tr>
+              <tr><td>MDS</td><td>47.4 M</td><td>93.14</td><td>93.14</td><td>94.77</td><td>95.02</td><td>82.36</td><td>84.47</td><td>81.53</td><td>83.24</td><td>93.26</td><td>94.41</td></tr>
+              <tr><td>Joint Audio-Visual</td><td>46.1 M</td><td>75.22</td><td>75.69</td><td>81.65</td><td>83.47</td><td>90.44</td><td>89.94</td><td>81.20</td><td>82.45</td><td>92.96</td><td>93.59</td></tr>
+              <tr class="ours"><td>Ours</td><td>32.4 M</td><td>96.82</td><td>97.35</td><td>98.98</td><td>97.72</td><td>89.75</td><td>90.07</td><td>92.38</td><td>93.25</td><td>93.48</td><td>94.75</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-notes">
+          Intra-dataset: 80% / 20% train / test split on each of the five benchmarks. FakeAVCeleb (19,500 fake and 500 real videos) is balanced with 10,000 VoxCeleb videos.
+        </p>
+
+        <p class="table-caption" style="margin-top: 36px;">TABLE 2 &nbsp;·&nbsp; Cross-dataset evaluation results on DFDC and the proposed Real-World (RW) dataset.</p>
+        <div class="table-wrap">
+          <table class="results">
+            <thead>
+              <tr><th rowspan="2">Methods</th><th rowspan="2">Params</th><th colspan="2">DFDC</th><th colspan="2">RW Dataset</th></tr>
+              <tr><th>ACC</th><th>AUC</th><th>ACC</th><th>AUC</th></tr>
+            </thead>
+            <tbody>
+              <tr class="group"><td colspan="6">Visual unimodal</td></tr>
+              <tr><td>SPSL (Xception)</td><td>45.7 M</td><td>72.62</td><td>73.58</td><td>61.28</td><td>61.93</td></tr>
+              <tr><td>PRRNet</td><td>62.1 M</td><td>74.65</td><td>75.18</td><td>65.85</td><td>65.43</td></tr>
+              <tr><td>LipForensics</td><td>36.0 M</td><td>71.26</td><td>74.30</td><td>63.37</td><td>63.82</td></tr>
+              <tr><td>STIL</td><td>32.5 M</td><td>70.29</td><td>71.34</td><td>65.48</td><td>65.18</td></tr>
+              <tr><td>FTCN</td><td>26.6 M</td><td>73.18</td><td>74.03</td><td>64.19</td><td>64.80</td></tr>
+              <tr class="group"><td colspan="6">Multimodal</td></tr>
+              <tr><td>Emotions</td><td>42.7 M</td><td>69.14</td><td>71.44</td><td>67.28</td><td>67.72</td></tr>
+              <tr><td>MDS</td><td>47.4 M</td><td>70.29</td><td>70.30</td><td>66.84</td><td>67.32</td></tr>
+              <tr><td>Joint Audio-Visual</td><td>46.1 M</td><td>71.22</td><td>72.69</td><td>68.15</td><td>67.87</td></tr>
+              <tr class="ours"><td>Ours</td><td>32.4 M</td><td>78.12</td><td>78.82</td><td>75.12</td><td>75.65</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-notes">
+          Cross-dataset: trained on FakeAVCeleb and KoDF, tested on DFDC and the RW dataset.
+          ACC and AUC in %. Values are as reported in the paper (Tables 1–2). Our row is highlighted. The paper's bold/underline markings are not reproduced here.
+        </p>
+      </section>
+
+      <section id="ablation">
+        <h2>Ablation Study</h2>
+        <p class="table-caption">TABLE 3 &nbsp;·&nbsp; Ablation study on effects of different combinations of P<sup>v</sup><sub>φ</sub>, P<sup>a</sup><sub>φ</sub>, P<sub>θ</sub>, and MTIA.</p>
+        <div class="table-wrap">
+          <table class="results flags" style="max-width: 560px;">
+            <thead>
+              <tr><th rowspan="2">P<sup>v</sup><sub>φ</sub></th><th rowspan="2">P<sup>a</sup><sub>φ</sub></th><th rowspan="2">P<sub>θ</sub></th><th rowspan="2">MTIA</th><th colspan="2">FakeAVCeleb</th></tr>
+              <tr><th>ACC</th><th>AUC</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>72.12</td><td>71.81</td></tr>
+              <tr><td>✓</td><td>✗</td><td>✓</td><td>✗</td><td>82.08</td><td>81.57</td></tr>
+              <tr><td>✗</td><td>✓</td><td>✓</td><td>✗</td><td>75.89</td><td>75.14</td></tr>
+              <tr><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>84.25</td><td>85.60</td></tr>
+              <tr><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>89.43</td><td>90.15</td></tr>
+              <tr class="ours"><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>92.38</td><td>93.25</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-notes">
+          Row 1 encodes each modality separately and concatenates the features through a fully connected layer.
+          The visual predictor with projection (row 2) outperforms the audio counterpart (row 3). Adding the landmark projection to both predictors (row 5) and then MTIA (row 6) gives the best FakeAVCeleb results.
+        </p>
+      </section>
+
+      <section id="qualitative">
+        <h2>Qualitative: Grad-CAM</h2>
+        <figure class="fig">
+          <img src="assets/fig3_gradcam.png" alt="Grad-CAM maps of models trained with and without landmarks on real and fake faces" loading="lazy">
+          <figcaption><strong>Figure 3:</strong> Grad-CAM analysis comparing models trained with and without landmarks (green: real, red: fake).
+            With landmark-based distillation, attention concentrates on facial features rather than the background.</figcaption>
+        </figure>
+      </section>
+
+      <section id="code">
+        <h2>Code</h2>
+        <div class="card">
+          <ul class="setup-list">
+            <li><strong>Environment:</strong> Python 3.9, PyTorch 2.6 (cu124), CUDA 12.4.</li>
+            <li><strong>Data:</strong> preprocess each dataset (e.g., FakeAVCeleb, KoDF) into a cropped face video, an audio waveform (<code>.wav</code>), and facial landmarks (<code>.npy</code>, MediaPipe) per sample. Loaders are in <code>loaders/</code>.</li>
+            <li><strong>Training:</strong> run the provided script, e.g. <code>bash run_fakeavceleb.sh</code>. Hyperparameters (<code>BATCH_SIZE</code>, <code>LEARNING_RATE</code>, <code>FEATURE_DIM</code>, …) are set at the top of the script.</li>
+          </ul>
+          <pre class="code"><code>git clone https://github.com/Ckck12/Beyond-Masking.git
+cd Beyond-Masking
+bash run_fakeavceleb.sh</code></pre>
+          <p style="margin:0;">See the <a href="https://github.com/Ckck12/Beyond-Masking#code--usage" target="_blank" rel="noopener">README</a> for the expected directory layout of the preprocessed data.</p>
+        </div>
+      </section>
+
+      <section id="citation">
+        <h2>Citation</h2>
+        <div class="card">
+          <p>If you find this work useful, please cite:</p>
+          <pre style="margin: 0; font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; color: var(--muted);">@inproceedings{park2025beyondmasking,
+  title     = {Beyond Masking: Landmark-based Representation Learning and
+               Knowledge-Distillation for Audio-Visual Deepfake Detection},
+  author    = {Park, Chan and Muneer, Muhammad Shahid and Woo, Simon S.},
+  booktitle = {Proceedings of the 34th ACM International Conference on
+               Information and Knowledge Management (CIKM '25)},
+  year      = {2025},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  location  = {Seoul, Republic of Korea},
+  isbn      = {979-8-4007-2040-6},
+  doi       = {10.1145/3746252.3760853}
+}</pre>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer>
+    <div class="footer-brand">DASH Lab · Sungkyunkwan University</div>
+    <p>
+      <a href="https://dash-lab.github.io/" target="_blank" rel="noopener">Data-driven AI Security HCI Lab (DASH Lab)</a>, Sungkyunkwan University
+    </p>
+    <p>
+      <a href="https://cikm2025.org/" target="_blank" rel="noopener">CIKM 2025</a> · 34th ACM International Conference on Information and Knowledge Management · Short Paper
+    </p>
+    <p>
+      DOI: <a href="https://doi.org/10.1145/3746252.3760853" target="_blank" rel="noopener">10.1145/3746252.3760853</a>
+      &nbsp;·&nbsp;
+      Code: <a href="https://github.com/Ckck12/Beyond-Masking" target="_blank" rel="noopener">github.com/Ckck12/Beyond-Masking</a>
+    </p>
+  </footer>
+
+</body>
+</html>

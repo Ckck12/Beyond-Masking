@@ -111,7 +111,7 @@ class LandmarkPredictor(nn.Module):
         return self.predictor(x) # Shape: (B, T, D)
 
 # ==============================================================================
-# ### 🧠 Main Model: LandmarkGuidedFramework ###
+# ### Main Model: LandmarkGuidedFramework ###
 # ==============================================================================
 class LandmarkGuidedFramework(nn.Module):
     def __init__(self, config: ModelConfig):
@@ -196,7 +196,6 @@ class LandmarkGuidedFramework(nn.Module):
         return loss_v + self.training_config.lambda_beta * loss_a
 
     def _compute_contrastive_loss(self, v_hat, a_hat):
-        # <<< CORRECTED
         temp = self.training_config.contrastive_loss_temp
         v_pooled = F.normalize(v_hat.mean(dim=1), p=2, dim=1)
         a_pooled = F.normalize(a_hat.mean(dim=1), p=2, dim=1)
@@ -209,6 +208,6 @@ class LandmarkGuidedFramework(nn.Module):
 # ==============================================================================
 def create_model(config: ModelConfig) -> LandmarkGuidedFramework:
     """Factory function to create the main model."""
-    print("🧠 Creating LandmarkGuidedFramework model with practical improvements...")
+    print("Creating LandmarkGuidedFramework model with practical improvements...")
     model = LandmarkGuidedFramework(config)
     return model
